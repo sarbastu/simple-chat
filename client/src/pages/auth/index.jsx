@@ -60,14 +60,10 @@ const Auth = () => {
     const { email, password } = formData;
     const route = isSignup ? SIGNUP_ROUTE : LOGIN_ROUTE;
     try {
-      const response = await apiClient.post(
-        route,
-        { email, password },
-        { withCredentials: true }
-      );
+      const response = await apiClient.post(route, { email, password });
       handleResponseData(response);
     } catch (error) {
-      toast.error(error.response.data);
+      toast.error(error.response.data.error);
     }
   };
 
@@ -77,6 +73,12 @@ const Auth = () => {
       navigate('/chat');
     } else {
       navigate('/profile');
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e);
     }
   };
 
@@ -132,6 +134,7 @@ const Auth = () => {
                     value={formData.password}
                     className='rounded-full p-6'
                     onChange={handleInputChange}
+                    onKeyDown={tab === 'login' ? handleKeyDown : null}
                   />
                   {tab === 'signup' && (
                     <Input
@@ -141,6 +144,7 @@ const Auth = () => {
                       value={formData.confirmPassword}
                       className='rounded-full p-6'
                       onChange={handleInputChange}
+                      onKeyDown={handleKeyDown}
                     />
                   )}
                   <Button className='rounded-full p-6' onClick={handleSubmit}>
