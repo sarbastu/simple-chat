@@ -1,4 +1,4 @@
-import Background from '/assets/images/login.jpg';
+import loginImage from '/assets/images/login.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -157,8 +157,8 @@ const Auth = () => {
         </div>
         <div className='hidden xl:flex justify-center items-center'>
           <img
-            src={Background}
-            alt='Background Authentication'
+            src={loginImage}
+            alt='loginImage Authentication'
             className='h-[600px] rounded-3xl'
           />
         </div>

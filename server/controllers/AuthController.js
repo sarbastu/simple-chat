@@ -1,11 +1,15 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/UserModel.js';
 import { compare } from 'bcrypt';
+import cloudinary from '../config/cloudinary.js';
 
+const jwtExpirations = '3d';
 const maxAge = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 const createToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_KEY, { expiresIn: maxAge });
+  return jwt.sign({ userId }, process.env.JWT_KEY, {
+    expiresIn: jwtExpirations,
+  });
 };
 
 const sendUserData = (user) => {
@@ -15,7 +19,7 @@ const sendUserData = (user) => {
     userName: user.userName,
     image: user.image,
     color: user.color,
-    profile: user.profileSetup,
+    profileSetup: user.profileSetup,
   };
 };
 
@@ -86,7 +90,7 @@ export const login = async (request, response) => {
 
 export const getUserInfo = async (request, response) => {
   try {
-    const user = await User.findById(request.userId); // Ensure that userId comes from a verified token
+    const user = await User.findById(request.userId);
 
     if (!user) {
       return response.status(404).json({ error: 'User not found' });
@@ -96,5 +100,61 @@ export const getUserInfo = async (request, response) => {
   } catch (error) {
     console.error('Get user info error:', error.stack);
     return response.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const updateProfile = async (request, response) => {
+  try {
+    const { userName, color } = request.body;
+
+    if (!userName || !color) {
+      return response.status(400).json({ error: 'Incomplete information' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      request.userId,
+      {
+        userName,
+        color,
+        profileSetup: true,
+      },
+      { new: true, runValidators: true }
+    );
+
+    return response.status(200).json({ user: sendUserData(user) });
+  } catch (error) {
+    console.error(`Update profile error:`, error.stack);
+    return response.status(500).json({ error: 'Update error' });
+  }
+};
+
+export const updateProfileImage = async (request, response) => {
+  const { image } = request.body;
+  if (!image) {
+    return response.status(400).json({ error: 'No image provided.' });
+  }
+
+  try {
+    const uploadResponse = await cloudinary.uploader.upload(image, {
+      folder: 'profile_images',
+      resource_type: 'image',
+    });
+
+    const user = await User.findByIdAndUpdate(
+      request.userId,
+      {
+        image: uploadResponse.secure_url,
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return response.status(404).json({ error: 'User not found.' });
+    }
+
+    return response.status(200).json({ user: sendUserData(user) });
+  } catch (error) {
+    console.error('Profile image upload error:', error.stack);
+    return response.status(500).json({ error: 'Failed to update image' });
   }
 };

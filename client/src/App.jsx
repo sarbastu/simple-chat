@@ -6,6 +6,8 @@ import { useAppStore } from './store';
 import { useEffect, useState } from 'react';
 import { apiClient } from './lib/api-client';
 import { GET_USER_INFO } from './utils/constants';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 const ProtectedRoute = ({ children, requiresAuth }) => {
   const { userInfo } = useAppStore();
@@ -37,6 +39,7 @@ const App = () => {
           setUserInfo(null);
         }
       } catch (error) {
+        console.log(error);
         setUserInfo(null);
       } finally {
         setLoading(false);
@@ -51,7 +54,15 @@ const App = () => {
   }, [userInfo, setUserInfo]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className='h-screen w-full flex justify-center items-center bg-stone-900'>
+        <FontAwesomeIcon
+          icon={faSpinner}
+          pulse
+          className='text-5xl text-white'
+        />
+      </div>
+    );
   }
 
   return (
