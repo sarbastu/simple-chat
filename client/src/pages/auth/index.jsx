@@ -63,13 +63,13 @@ const Auth = () => {
       const response = await apiClient.post(route, { email, password });
       handleResponseData(response);
     } catch (error) {
-      toast.error(error.response.data.error);
+      toast.error(error.response?.data?.message || 'Something went wrong');
     }
   };
 
   const handleResponseData = async (response) => {
     setUserInfo(response.data.user);
-    if (response.data.user.profile) {
+    if (response.data.user.profileSetup) {
       navigate('/chat');
     } else {
       navigate('/profile');

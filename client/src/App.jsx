@@ -5,7 +5,7 @@ import Profile from './pages/profile';
 import { useAppStore } from './store';
 import { useEffect, useState } from 'react';
 import { apiClient } from './lib/api-client';
-import { GET_USER_INFO } from './utils/constants';
+import { LOGOUT_ROUTE, USER_ROUTE } from './utils/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
@@ -31,15 +31,15 @@ const App = () => {
   useEffect(() => {
     const getUserData = async () => {
       try {
-        const response = await apiClient.get(GET_USER_INFO);
-
-        if (response.status === 200 && response.data.user.id) {
+        const response = await apiClient.get(USER_ROUTE);
+        if (response.status === 200 && response.data.user) {
           setUserInfo(response.data.user);
         } else {
           setUserInfo(null);
+          apiClient.delete(LOGOUT_ROUTE);
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
         setUserInfo(null);
       } finally {
         setLoading(false);

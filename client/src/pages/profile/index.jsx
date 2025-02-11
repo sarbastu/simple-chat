@@ -2,10 +2,7 @@ import avatarImage from '/assets/images/avatar.png';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { apiClient } from '@/lib/api-client';
 import { useAppStore } from '@/store';
-import {
-  UPDATE_PROFILE_ROUTE,
-  UPLOAD_PROFILE_IMAGE_ROUTE,
-} from '@/utils/constants';
+import { USER_ROUTE, USER_IMAGE_ROUTE } from '@/utils/constants';
 import { faLeftLong } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
@@ -17,7 +14,7 @@ const colors = ['#aa2b2b', '#2baa2b', '#2b2baa', '#2baaaa', '#aa2baa'];
 const Profile = () => {
   const { userInfo, setUserInfo } = useAppStore();
   const navigate = useNavigate();
-  const [userName, setUserName] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [image, setImage] = useState(null);
   const [selectedColor, setSelectedColor] = useState(
     colors[Math.floor(Math.random() * colors.length)]
@@ -26,15 +23,15 @@ const Profile = () => {
 
   useEffect(() => {
     if (userInfo.profileSetup) {
-      setUserName(userInfo.userName);
+      setDisplayName(userInfo.displayName);
       setSelectedColor(userInfo.color);
     }
   }, [userInfo]);
 
   const validateForm = () => {
     const errors = [];
-    if (!userName) {
-      errors.unshift('Username required.');
+    if (!displayName) {
+      errors.unshift('Display name required.');
     }
     if (!selectedColor) {
       errors.unshift('Color not selected.');
@@ -49,8 +46,8 @@ const Profile = () => {
       return errors.forEach((err) => toast.error(err));
     }
     try {
-      const response = await apiClient.post(UPDATE_PROFILE_ROUTE, {
-        userName,
+      const response = await apiClient.patch(USER_ROUTE, {
+        displayName,
         color: selectedColor,
       });
       if (response.status === 200 && response.data) {
@@ -59,11 +56,12 @@ const Profile = () => {
           await uploadImage();
         } else {
           toast.success('Update successful.');
+          navigate('/chat');
         }
       }
     } catch (error) {
       setImage(null);
-      toast.error(error.response.data.error);
+      console.error(error);
     }
   };
 
@@ -79,12 +77,13 @@ const Profile = () => {
 
   const uploadImage = async () => {
     try {
-      const response = await apiClient.post(UPLOAD_PROFILE_IMAGE_ROUTE, {
+      const response = await apiClient.post(USER_IMAGE_ROUTE, {
         image,
       });
       setUserInfo({ ...userInfo, ...response.data.user });
+      navigate('/chat');
     } catch (error) {
-      toast.error(error.response.data.error);
+      toast.error(error.response.data.message);
     }
   };
 
@@ -101,7 +100,7 @@ const Profile = () => {
           />
         </div>
 
-        {/* form */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className='flex flex-col gap-8'>
           {/* Avatar Section */}
           <div className='flex flex-col gap-6 items-center'>
@@ -168,15 +167,15 @@ const Profile = () => {
                 className='w-8 h-8 rounded-md p-0.5'
               />
             </div>
-            {/* Username */}
+            {/* Display Name */}
             <div className='flex flex-col gap-6'>
               <div className='space-y-4'>
-                <label className='text-white text-lg'>Username</label>
+                <label className='text-white text-lg'>Display Name</label>
                 <input
                   type='text'
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder={userInfo?.userName || 'Enter your name'}
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={userInfo?.displayName || 'Enter your name'}
                   className='w-full p-3 rounded-lg bg-neutral-800 text-white placeholder-gray-400
                     focus:outline-none focus:ring-2 focus:ring-blue-500'
                 />
