@@ -2,45 +2,81 @@ import cloudinary from '../config/cloudinary.js';
 import User from '../models/user.model.js';
 
 class UserService {
-  getProfile = async ({ _id }) => {
-    const userData = await User.findById(_id);
+  getProfile = async (userId) => {
+    const userData = await User.findById(userId).select(
+      'displayName email profileImage lastActive online'
+    );
+
     if (!userData) {
       throw { status: 404, message: 'User not found' };
     }
+
     return userData;
   };
 
-  updateProfile = async ({ _id }, { displayName, color }) => {
-    if (!displayName || !color) {
-      throw { status: 400, message: 'Incomplete fields' };
-    }
-    const updatedUser = await User.findByIdAndUpdate(
-      _id,
-      { displayName, color },
-      { new: true, runValidators: true, select: '-password' }
-    );
+  updateProfile = async (userId, updateData) => {
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    }).select('displayName email profileImage lastActive online');
+
     if (!updatedUser) {
       throw { status: 404, message: 'User not found' };
     }
+
     return updatedUser;
   };
 
-  updateProfileImage = async ({ _id }, { image }) => {
-    if (!image) {
-      throw { status: 400, message: 'Incomplete fields' };
-    }
-    const uploadResponse = await cloudinary.uploader.upload(image, {
-      folder: 'profile_images',
-      resource_type: 'image',
-    });
+  updateProfileImage = async (userId, image) => {
+    const uploadResponse = await cloudinary.uploader
+      .upload(image, {
+        folder: 'profile_images',
+        resource_type: 'image',
+      })
+      .catch((error) => {
+        throw {
+          status: 500,
+          message: 'Image upload failed',
+          error: error.message,
+        };
+      });
+
     const updatedUser = await User.findByIdAndUpdate(
-      _id,
+      userId,
       {
-        image: uploadResponse.secure_url,
+        profileImage: uploadResponse.secure_url,
       },
-      { new: true, select: '-password' }
-    );
+      { new: true }
+    ).select('displayName email profileImage lastActive online');
+
+    if (!updatedUser) {
+      throw { status: 404, message: 'User not found' };
+    }
+
     return updatedUser;
+  };
+
+  getUsers = async (search = '', page = 1, limit = 20) => {
+    const maxLimit = Math.min(Number(limit) || 20, 100);
+
+    const query = search
+      ? {
+          $or: [
+            { displayName: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+          ],
+        }
+      : {};
+
+    const users = await User.find(query)
+      .select('displayName email profileImage lastActive online')
+      .sort({ displayName: -1, email: -1 })
+      .skip((page - 1) * maxLimit)
+      .limit(Number(maxLimit) || 20);
+
+    const totalCount = await User.countDocuments(query);
+
+    return { users, totalCount };
   };
 }
 

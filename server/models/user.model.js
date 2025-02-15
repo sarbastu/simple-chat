@@ -1,50 +1,66 @@
 import { genSalt, hash } from 'bcrypt';
 import mongoose from 'mongoose';
 
-const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    match: [/.+@.+\..+/, 'Please enter a valid email address'],
+const userSchema = new mongoose.Schema(
+  {
+    displayName: {
+      type: String,
+      required: false,
+      minlength: 3,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      match: [/\S+@\S+\.\S+/, 'Please provide a valid email address'],
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 8,
+    },
+    profileImage: {
+      type: String,
+      default:
+        'https://res.cloudinary.com/djryb7nik/image/upload/v1739270578/profile_images/default.png',
+    },
+    lastActive: {
+      type: Date,
+      default: Date.now,
+    },
+    online: { type: Boolean, default: false },
   },
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [7, 'Password must be at least 7 characters long'],
-  },
-  displayName: {
-    type: String,
-    required: false,
-    minlength: 3,
-    unique: true,
-    sparse: true,
-  },
-  image: {
-    type: String,
-    required: false,
-  },
-  color: {
-    type: String,
-    default: '#000000',
-    required: false,
-  },
-  profileSetup: {
-    type: Boolean,
-    default: false,
-  },
-});
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_, ret) {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
+);
 
 userSchema.pre('save', async function (next) {
-  try {
-    const salt = await genSalt();
-    this.password = await hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+  if (!this.displayName) {
+    this.displayName = `User-${this._id.toString()}`;
   }
+
+  if (this.isModified('password')) {
+    try {
+      const salt = await genSalt(10);
+      this.password = await hash(this.password, salt);
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  next();
 });
 
-const User = mongoose.model('Users', userSchema);
+const User = mongoose.model('User', userSchema);
 
 export default User;

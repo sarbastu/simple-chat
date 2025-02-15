@@ -3,36 +3,42 @@ import User from '../models/user.model.js';
 import { generateToken } from '../utils/jwt.js';
 
 class AuthService {
-  signup = async ({ email, password }) => {
-    if (!email || !password) {
-      throw { status: 400, message: 'Email and password required' };
-    }
+  signup = async (email, password) => {
+    email = email.trim();
+    password = password.trim();
+
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
       throw { status: 409, message: 'Email already in use' };
     }
+
     const user = await User.create({ email, password });
     const token = generateToken(user._id);
-    user.password = undefined;
-    return { user, token };
+    const sanitizedUser = await User.findById(user._id);
+
+    return { user: sanitizedUser.toJSON(), token };
   };
 
-  login = async ({ email, password }) => {
-    if (!email || !password) {
-      throw { status: 400, message: 'Email and password required' };
-    }
+  login = async (email, password) => {
+    email = email.trim();
+    password = password.trim();
+
     const user = await User.findOne({ email });
+
     if (!user) {
       throw { status: 404, message: 'User not found' };
     }
-    const confirmPassword = await compare(password, user.password);
-    if (confirmPassword) {
-      const token = generateToken(user._id);
-      user.password = undefined;
-      return { user, token };
-    } else {
+
+    const isPasswordValid = await compare(password, user.password);
+
+    if (!isPasswordValid) {
       throw { status: 400, message: 'Incorrect password' };
     }
+
+    const token = generateToken(user._id);
+
+    return { user: user.toJSON(), token };
   };
 }
 
