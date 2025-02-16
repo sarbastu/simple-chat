@@ -5,7 +5,9 @@ export const signup = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+    return res
+      .status(400)
+      .json({ message: 'No email or password are selected to signup' });
   }
 
   try {
@@ -22,7 +24,9 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+    return res
+      .status(400)
+      .json({ message: 'No email or password are selected to login' });
   }
 
   try {

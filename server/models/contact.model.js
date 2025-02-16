@@ -15,6 +15,7 @@ const contactSchema = new mongoose.Schema(
     uniquePair: {
       type: String,
       unique: true,
+      index: true,
     },
     status: {
       type: String,
@@ -41,7 +42,8 @@ contactSchema.pre(/^find/, function (next) {
   }
   next();
 });
-+contactSchema.pre('save', function (next) {
+
+contactSchema.pre('save', function (next) {
   if (this.requester.equals(this.recipient)) {
     return next(new Error('Requester and recipient cannot be the same user'));
   }

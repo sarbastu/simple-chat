@@ -1,9 +1,10 @@
 import userService from '../services/user.service.js';
 
 export const getProfile = async (req, res) => {
-  const userId = req.user._id;
+  const authId = req.user._id;
+
   try {
-    const user = await userService.getProfile(userId);
+    const user = await userService.getProfile(authId);
     res.status(200).json({ message: 'Retrieved profile information', user });
   } catch (error) {
     console.error(`Error getting profile ${error.message}`);
@@ -12,17 +13,17 @@ export const getProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  const userId = req.user._id;
+  const authId = req.user._id;
   const { displayName, color } = req.body;
 
   if (!displayName || !color) {
     return res
       .status(400)
-      .json({ message: 'Display name and color are required' });
+      .json({ message: 'Display name or color is missing' });
   }
 
   try {
-    const user = await userService.updateProfile(userId, {
+    const user = await userService.updateProfile(authId, {
       displayName,
       color,
     });
@@ -34,15 +35,15 @@ export const updateProfile = async (req, res) => {
 };
 
 export const updateProfileImage = async (req, res) => {
-  const userId = req.user._id;
+  const authId = req.user._id;
   const { image } = req.body;
 
   if (!image) {
-    return res.status(400).json({ message: 'Image is required' });
+    return res.status(400).json({ message: 'Image is missing' });
   }
 
   try {
-    const user = await userService.updateProfileImage(userId, image);
+    const user = await userService.updateProfileImage(authId, image);
     return res.status(200).json({ message: 'Updated profile image', user });
   } catch (error) {
     console.error(`Error updating profile image: ${error.message}`);

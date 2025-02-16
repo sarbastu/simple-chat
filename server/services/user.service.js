@@ -2,8 +2,8 @@ import cloudinary from '../config/cloudinary.js';
 import User from '../models/user.model.js';
 
 class UserService {
-  getProfile = async (userId) => {
-    const userData = await User.findById(userId).select(
+  getProfile = async (authId) => {
+    const userData = await User.findById(authId).select(
       'displayName email profileImage lastActive online'
     );
 
@@ -14,8 +14,8 @@ class UserService {
     return userData;
   };
 
-  updateProfile = async (userId, updateData) => {
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+  updateProfile = async (authId, updateData) => {
+    const updatedUser = await User.findByIdAndUpdate(authId, updateData, {
       new: true,
       runValidators: true,
     }).select('displayName email profileImage lastActive online');
@@ -27,7 +27,7 @@ class UserService {
     return updatedUser;
   };
 
-  updateProfileImage = async (userId, image) => {
+  updateProfileImage = async (authId, image) => {
     const uploadResponse = await cloudinary.uploader
       .upload(image, {
         folder: 'profile_images',
@@ -42,7 +42,7 @@ class UserService {
       });
 
     const updatedUser = await User.findByIdAndUpdate(
-      userId,
+      authId,
       {
         profileImage: uploadResponse.secure_url,
       },

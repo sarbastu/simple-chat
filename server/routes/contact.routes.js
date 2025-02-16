@@ -16,9 +16,9 @@ contactRoutes.use(authenticateToken, updateLastActive);
 contactRoutes.get('/', getContacts);
 contactRoutes.get('/pending', getContactRequests);
 
-contactRoutes.post('/request', requestContact);
+contactRoutes.post('/', requestContact);
 
-contactRoutes.patch('/:contactId', acceptContact);
+contactRoutes.post('/:contactId/accept', acceptContact);
 
 contactRoutes.delete('/:contactId', removeContact);
 

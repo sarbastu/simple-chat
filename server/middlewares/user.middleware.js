@@ -1,13 +1,13 @@
 import User from '../models/user.model.js';
 
 export const updateLastActive = async (req, res, next) => {
-  const userId = req.user?._id;
+  const authId = req.user?._id;
 
-  if (userId) {
-    User.findByIdAndUpdate(userId, {
+  if (authId) {
+    User.findByIdAndUpdate(authId, {
       lastActive: Date.now(),
     }).catch((error) => {
-      console.error(`Error updating lastActive for user ${userId}:`, error);
+      console.error(`Error updating lastActive for user ${authId}:`, error);
     });
   }
 

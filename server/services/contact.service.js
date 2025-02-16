@@ -1,36 +1,29 @@
 import Contact from '../models/contact.model.js';
 
 class ContactService {
-  requestContact = async (requester, recipient) => {
-    const uniquePair = [requester.toString(), recipient.toString()]
-      .sort()
-      .join('_');
+  requestContact = async (authId, targetUserId) => {
+    const uniquePair = [authId, targetUserId].sort().join('_');
 
     const existing = await Contact.findOne({ uniquePair }).setOptions({
       includeDeleted: true,
     });
 
     if (!existing) {
-      return await Contact.create({ requester, recipient });
+      return await Contact.create({ requester: authId, targetUserId });
     }
-
     if (existing.status === 'accepted') {
       throw { status: 400, message: 'Contact already added' };
     }
-
-    if (existing.status === 'pending') {
-      if (existing.requester.equals(requester)) {
-        throw { status: 400, message: 'Request already exists' };
-      }
-      if (existing.requester.equals(recipient)) {
-        existing.status = 'accepted';
-      }
+    if (existing.status === 'pending' && existing.requester.equals(authId)) {
+      throw { status: 400, message: 'Request already exists' };
     }
-
+    if (existing.status === 'pending' && existing.recipient.equals(authId)) {
+      existing.status = 'accepted';
+    }
     if (existing.status === 'rejected' || existing.deletedAt) {
       Object.assign(existing, {
-        requester,
-        recipient,
+        requester: authId,
+        recipient: targetUserId,
         status: 'pending',
         deletedAt: null,
       });
@@ -40,11 +33,11 @@ class ContactService {
     return existing;
   };
 
-  acceptContact = async (userId, contactId) => {
+  acceptContact = async (authId, contactId) => {
     const contact = await Contact.findOneAndUpdate(
       {
         _id: contactId,
-        recipient: userId,
+        recipient: authId,
         status: 'pending',
       },
       { status: 'accepted' },
@@ -58,10 +51,10 @@ class ContactService {
     return contact;
   };
 
-  removeContact = async (userId, contactId, hardDelete = false) => {
+  removeContact = async (authId, contactId, hardDelete = false) => {
     const contact = await Contact.findOne({
       _id: contactId,
-      $or: [{ requester: userId }, { recipient: userId }],
+      $or: [{ requester: authId }, { recipient: authId }],
     });
 
     if (!contact) {
@@ -77,11 +70,11 @@ class ContactService {
     return contact;
   };
 
-  getContacts = async (userId, search, page = 1, limit = 20) => {
+  getContacts = async (authId, search, page = 1, limit = 20) => {
     const maxLimit = Math.min(Number(limit) || 20, 100);
 
     const baseQuery = {
-      $or: [{ requester: userId }, { recipient: userId }],
+      $or: [{ requester: authId }, { recipient: authId }],
       status: 'accepted',
     };
 
@@ -109,17 +102,17 @@ class ContactService {
         '_id email displayName profileImage lastActive online'
       )
       .skip((page - 1) * maxLimit)
-      .limit(Number(maxLimit) || 20)
+      .limit(maxLimit)
       .lean();
 
-    return this.#getContactDetails(userId, contacts);
+    return this.#getContactDetails(authId, contacts);
   };
 
-  getRequests = async (userId, page = 1, limit = 20) => {
+  getRequests = async (authId, page = 1, limit = 20) => {
     const maxLimit = Math.min(Number(limit) || 20, 100);
 
     const contacts = await Contact.find({
-      recipient: userId,
+      recipient: authId,
       status: 'pending',
     })
       .populate({
@@ -127,19 +120,19 @@ class ContactService {
         select: '_id email displayName profileImage',
       })
       .skip((page - 1) * maxLimit)
-      .limit(Number(maxLimit) || 20)
+      .limit(maxLimit)
       .lean();
 
-    return this.#getContactDetails(userId, contacts);
+    return this.#getContactDetails(authId, contacts);
   };
 
-  #getContactDetails = (userId, contacts) => {
+  #getContactDetails = (authId, contacts) => {
     return contacts
       .map((contact) => {
-        if (contact.requester && !contact.requester._id.equals(userId)) {
+        if (contact.requester && !contact.requester._id.equals(authId)) {
           return { _id: contact._id, user: contact.requester };
         }
-        if (contact.recipient && !contact.recipient._id.equals(userId)) {
+        if (contact.recipient && !contact.recipient._id.equals(authId)) {
           return { _id: contact._id, user: contact.recipient };
         }
       })
