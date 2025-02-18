@@ -14,7 +14,7 @@ userRoutes.use(authenticateToken, updateLastActive);
 
 userRoutes.get('/me', getProfile);
 
-userRoutes.put('/me', updateProfile);
+userRoutes.patch('/me', updateProfile);
 
 userRoutes.patch('/me/image', updateProfileImage);
 

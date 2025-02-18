@@ -5,16 +5,17 @@ export const getContacts = async (req, res) => {
   const { search, page, limit } = req.query;
 
   try {
-    const contacts = await contactService.getContacts(
+    const result = await contactService.getContacts(
       authId,
       search,
       page,
       limit
     );
-    return res.status(200).json({ message: 'Retrieved contacts', contacts });
+    const message = 'Retrieved contacts';
+    return res.status(200).json({ message, ...result });
   } catch (error) {
     console.error(`Error retrieving contacts: ${error.message}`);
-    res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -22,14 +23,12 @@ export const getContactRequests = async (req, res) => {
   const authId = req.user._id;
 
   try {
-    const requests = await contactService.getRequests(authId);
-    return res.status(200).json({
-      message: 'Retrieved requests',
-      requests,
-    });
+    const result = await contactService.getRequests(authId);
+    const message = 'Retrieved requests';
+    return res.status(200).json({ message, ...result });
   } catch (error) {
     console.error(`Error retrieving contact requests: ${error.message}`);
-    res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -43,10 +42,11 @@ export const requestContact = async (req, res) => {
 
   try {
     await contactService.requestContact(authId, targetUserId);
-    return res.status(201).json({ message: 'Request sent' });
+    const message = 'Request sent';
+    return res.status(201).json({ message });
   } catch (error) {
     console.error(`Error sending contact request: ${error.message}`);
-    res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -60,10 +60,11 @@ export const acceptContact = async (req, res) => {
 
   try {
     await contactService.acceptContact(authId, contactId);
-    return res.status(200).json({ message: 'Contact added' });
+    const message = 'Contact added';
+    return res.status(200).json({ message });
   } catch (error) {
     console.error(`Error adding contact: ${error.message}`);
-    res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({ message: error.message });
   }
 };
 
@@ -77,9 +78,10 @@ export const removeContact = async (req, res) => {
 
   try {
     await contactService.removeContact(authId, contactId, hardDelete);
-    return res.status(200).json({ message: 'Contact removed' });
+    const message = 'Contact removed';
+    return res.status(200).json({ message });
   } catch (error) {
     console.error(`Error removing contact: ${error.message}`);
-    res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({ message: error.message });
   }
 };

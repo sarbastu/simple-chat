@@ -14,10 +14,13 @@ class AuthService {
     }
 
     const user = await User.create({ email, password });
-    const token = generateToken(user._id);
-    const sanitizedUser = await User.findById(user._id);
 
-    return { user: sanitizedUser.toJSON(), token };
+    const token = generateToken(user._id);
+    const sanitizedUser = await User.findById(user._id).select(
+      'displayName email profileImage online'
+    );
+
+    return { data: sanitizedUser, token };
   };
 
   login = async (email, password) => {
@@ -37,8 +40,11 @@ class AuthService {
     }
 
     const token = generateToken(user._id);
+    const sanitizedUser = await User.findById(user._id).select(
+      'displayName password email profileImage online'
+    );
 
-    return { user: user.toJSON(), token };
+    return { data: sanitizedUser, token };
   };
 }
 

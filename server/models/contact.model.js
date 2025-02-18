@@ -27,7 +27,15 @@ const contactSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_, ret) {
+        delete ret._v;
+        return ret;
+      },
+    },
+  }
 );
 
 contactSchema.methods.softDelete = function () {

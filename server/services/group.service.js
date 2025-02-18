@@ -4,14 +4,45 @@ import Group from '../models/group.model.js';
 class GroupServices {
   getGroups = async (authId, page = 1, limit = 20) => {
     const maxLimit = Math.min(Number(limit) || 20, 100);
-    const groups = await Group.find({
+    const validatedPage = Math.max(Number(page) || 1, 1);
+
+    const query = {
       members: authId,
-    })
-      .skip((page - 1) * maxLimit)
+    };
+
+    const groups = await Group.find(query)
+      .skip((validatedPage - 1) * maxLimit)
       .limit(maxLimit)
       .lean();
 
-    return groups;
+    const totalItems = Group.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / maxLimit);
+
+    const pagination = {
+      totalItems,
+      totalPages,
+      currentPage: validatedPage,
+      pageSize: maxLimit,
+      hasPreviousPage: validatedPage > 1,
+      previousPage: validatedPage > 1 ? validatedPage - 1 : null,
+      hasNextPage: validatedPage < totalPages,
+      nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
+    };
+
+    const baseUrl = `/group?limit=${maxLimit}`;
+
+    pagination.links = {
+      self: `${baseUrl}&page=${validatedPage}`,
+      ...(pagination.hasPreviousPage && {
+        previous: `${baseUrl}&page=${pagination.previousPage}`,
+      }),
+      ...(pagination.hasNextPage && {
+        next: `${baseUrl}&page=${pagination.nextPage}`,
+      }),
+      last: `${baseUrl}&page=${totalPages}`,
+    };
+
+    return { data: groups, pagination };
   };
 
   createGroup = async (authId, name = '') => {
@@ -21,7 +52,7 @@ class GroupServices {
       members: [authId],
     });
 
-    return group;
+    return { data: group };
   };
 
   addMemberToGroup = async (authId, groupId, targetUserId) => {
@@ -48,7 +79,7 @@ class GroupServices {
       throw { status: 403, message: 'Not authorized or group not found' };
     }
 
-    return group;
+    return { data: group };
   };
 
   removeMemberFromGroup = async (authId, groupId, targetUserId) => {
@@ -72,7 +103,7 @@ class GroupServices {
 
     await group.save();
 
-    return group;
+    return { data: group };
   };
 
   leaveGroup = async (authId, groupId) => {
@@ -98,7 +129,7 @@ class GroupServices {
 
     await group.save();
 
-    return group;
+    return { data: group };
   };
 }
 

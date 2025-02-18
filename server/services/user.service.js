@@ -4,27 +4,27 @@ import User from '../models/user.model.js';
 class UserService {
   getProfile = async (authId) => {
     const userData = await User.findById(authId).select(
-      'displayName email profileImage lastActive online'
+      'displayName email profileImage online'
     );
 
     if (!userData) {
       throw { status: 404, message: 'User not found' };
     }
 
-    return userData;
+    return { data: userData };
   };
 
   updateProfile = async (authId, updateData) => {
     const updatedUser = await User.findByIdAndUpdate(authId, updateData, {
       new: true,
       runValidators: true,
-    }).select('displayName email profileImage lastActive online');
+    }).select('displayName email profileImage online');
 
     if (!updatedUser) {
       throw { status: 404, message: 'User not found' };
     }
 
-    return updatedUser;
+    return { data: updatedUser };
   };
 
   updateProfileImage = async (authId, image) => {
@@ -36,8 +36,7 @@ class UserService {
       .catch((error) => {
         throw {
           status: 500,
-          message: 'Image upload failed',
-          error: error.message,
+          message: `Image upload failed: ${error.message}`,
         };
       });
 
@@ -47,17 +46,18 @@ class UserService {
         profileImage: uploadResponse.secure_url,
       },
       { new: true }
-    ).select('displayName email profileImage lastActive online');
+    ).select('displayName email profileImage online');
 
     if (!updatedUser) {
       throw { status: 404, message: 'User not found' };
     }
 
-    return updatedUser;
+    return { data: updatedUser };
   };
 
-  getUsers = async (search = '', page = 1, limit = 20) => {
+  getUsers = async (search = '', page = 1, limit) => {
     const maxLimit = Math.min(Number(limit) || 20, 100);
+    const validatedPage = Math.max(Number(page) || 1, 1);
 
     const query = search
       ? {
@@ -69,14 +69,39 @@ class UserService {
       : {};
 
     const users = await User.find(query)
-      .select('displayName email profileImage lastActive online')
+      .select('displayName email profileImage online')
       .sort({ displayName: -1, email: -1 })
-      .skip((page - 1) * maxLimit)
+      .skip((validatedPage - 1) * maxLimit)
       .limit(Number(maxLimit) || 20);
 
-    const totalCount = await User.countDocuments(query);
+    const totalItems = await User.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / maxLimit);
 
-    return { users, totalCount };
+    const pagination = {
+      totalItems,
+      totalPages,
+      currentPage: validatedPage,
+      pageSize: maxLimit,
+      hasPreviousPage: validatedPage > 1,
+      previousPage: validatedPage > 1 ? validatedPage - 1 : null,
+      hasNextPage: validatedPage < totalPages,
+      nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
+    };
+
+    const baseUrl = `/user?search=${search || ''}&limit=${maxLimit}`;
+
+    pagination.links = {
+      self: `${baseUrl}&page=${validatedPage}`,
+      ...(pagination.hasPreviousPage && {
+        previous: `${baseUrl}&page=${pagination.previousPage}`,
+      }),
+      ...(pagination.hasNextPage && {
+        next: `${baseUrl}&page=${pagination.nextPage}`,
+      }),
+      last: `${baseUrl}&page=${totalPages}`,
+    };
+
+    return { data: users, pagination };
   };
 }
 

@@ -9,7 +9,10 @@ class ContactService {
     });
 
     if (!existing) {
-      return await Contact.create({ requester: authId, targetUserId });
+      return await Contact.create({
+        requester: authId,
+        recipient: targetUserId,
+      });
     }
     if (existing.status === 'accepted') {
       throw { status: 400, message: 'Contact already added' };
@@ -21,16 +24,14 @@ class ContactService {
       existing.status = 'accepted';
     }
     if (existing.status === 'rejected' || existing.deletedAt) {
-      Object.assign(existing, {
-        requester: authId,
-        recipient: targetUserId,
-        status: 'pending',
-        deletedAt: null,
-      });
+      existing.requester = authId;
+      existing.recipient = targetUserId;
+      existing.status = 'pending';
+      existing.deletedAt = null;
     }
 
     await existing.save();
-    return existing;
+    return { data: existing };
   };
 
   acceptContact = async (authId, contactId) => {
@@ -48,7 +49,7 @@ class ContactService {
       throw { status: 404, message: 'Contact request not found' };
     }
 
-    return contact;
+    return { data: contact };
   };
 
   removeContact = async (authId, contactId, hardDelete = false) => {
@@ -70,17 +71,18 @@ class ContactService {
     return contact;
   };
 
-  getContacts = async (authId, search, page = 1, limit = 20) => {
-    const maxLimit = Math.min(Number(limit) || 20, 100);
+  getContacts = async (authId, search, page = 1, limit) => {
+    const maxLimit = Math.min(Number(limit) || 50, 100);
+    const validatedPage = Math.max(Number(page) || 1, 1);
 
-    const baseQuery = {
+    const query = {
       $or: [{ requester: authId }, { recipient: authId }],
       status: 'accepted',
     };
 
     if (search) {
-      baseQuery.$and = [
-        baseQuery,
+      query.$and = [
+        query,
         {
           $or: [
             { 'requester.email': { $regex: search, $options: 'i' } },
@@ -92,38 +94,90 @@ class ContactService {
       ];
     }
 
-    const contacts = await Contact.find(baseQuery)
-      .populate(
-        'requester',
-        '_id email displayName profileImage lastActive online'
-      )
-      .populate(
-        'recipient',
-        '_id email displayName profileImage lastActive online'
-      )
-      .skip((page - 1) * maxLimit)
+    const contacts = await Contact.find(query)
+      .populate('requester', '_id email displayName profileImage online')
+      .populate('recipient', '_id email displayName profileImage online')
+      .skip((validatedPage - 1) * maxLimit)
       .limit(maxLimit)
       .lean();
 
-    return this.#getContactDetails(authId, contacts);
+    const contactsFormatted = this.#getContactDetails(authId, contacts);
+
+    const totalItems = await Contact.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / maxLimit);
+
+    const pagination = {
+      totalItems,
+      totalPages,
+      currentPage: validatedPage,
+      pageSize: maxLimit,
+      hasPreviousPage: validatedPage > 1,
+      previousPage: validatedPage > 1 ? validatedPage - 1 : null,
+      hasNextPage: validatedPage < totalPages,
+      nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
+    };
+
+    const baseUrl = `/contact?search=${search || ''}&limit=${maxLimit}`;
+
+    pagination.links = {
+      self: `${baseUrl}&page=${validatedPage}`,
+      ...(pagination.hasPreviousPage && {
+        previous: `${baseUrl}&page=${pagination.previousPage}`,
+      }),
+      ...(pagination.hasNextPage && {
+        next: `${baseUrl}&page=${pagination.nextPage}`,
+      }),
+      last: `${baseUrl}&page=${totalPages}`,
+    };
+
+    return { data: contactsFormatted, pagination };
   };
 
-  getRequests = async (authId, page = 1, limit = 20) => {
+  getRequests = async (authId, page = 1, limit) => {
     const maxLimit = Math.min(Number(limit) || 20, 100);
+    const validatedPage = Math.max(Number(page) || 1, 1);
 
-    const contacts = await Contact.find({
-      recipient: authId,
-      status: 'pending',
-    })
+    const query = { recipient: authId, status: 'pending' };
+
+    const contacts = await Contact.find(query)
       .populate({
         path: 'requester',
         select: '_id email displayName profileImage',
       })
-      .skip((page - 1) * maxLimit)
+      .skip((validatedPage - 1) * maxLimit)
       .limit(maxLimit)
       .lean();
 
-    return this.#getContactDetails(authId, contacts);
+    const contactsFormatted = this.#getContactDetails(authId, contacts);
+
+    const totalItems = await Contact.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / maxLimit);
+
+    const pagination = {
+      totalItems,
+      totalPages,
+      currentPage: validatedPage,
+      pageSize: maxLimit,
+      hasPreviousPage: validatedPage > 1,
+      previousPage: validatedPage > 1 ? validatedPage - 1 : null,
+      hasNextPage: validatedPage < totalPages,
+      nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
+    };
+
+    const baseUrl = `/contact/pending?limit=${maxLimit}`;
+
+    pagination.links = {
+      self: `${baseUrl}&page=${validatedPage}`,
+      ...(pagination.hasPreviousPage && {
+        previous: `${baseUrl}&page=${pagination.previousPage}`,
+      }),
+      ...(pagination.hasNextPage && {
+        next: `${baseUrl}&page=${pagination.nextPage}`,
+      }),
+      last: `${baseUrl}&page=${totalPages}`,
+    };
+
+    return { data: contactsFormatted, pagination };
   };
 
   #getContactDetails = (authId, contacts) => {
