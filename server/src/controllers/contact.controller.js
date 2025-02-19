@@ -1,37 +1,5 @@
 import contactService from '../services/contact.service.js';
 
-export const getContacts = async (req, res) => {
-  const authId = req.user._id;
-  const { search, page, limit } = req.query;
-
-  try {
-    const result = await contactService.getContacts(
-      authId,
-      search,
-      page,
-      limit
-    );
-    const message = 'Retrieved contacts';
-    return res.status(200).json({ message, ...result });
-  } catch (error) {
-    console.error(`Error retrieving contacts: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
-  }
-};
-
-export const getContactRequests = async (req, res) => {
-  const authId = req.user._id;
-
-  try {
-    const result = await contactService.getRequests(authId);
-    const message = 'Retrieved requests';
-    return res.status(200).json({ message, ...result });
-  } catch (error) {
-    console.error(`Error retrieving contact requests: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
-  }
-};
-
 export const requestContact = async (req, res) => {
   const authId = req.user._id;
   const { targetUserId } = req.body;
@@ -82,6 +50,38 @@ export const removeContact = async (req, res) => {
     return res.status(200).json({ message });
   } catch (error) {
     console.error(`Error removing contact: ${error.message}`);
+    return res.status(error.status || 500).json({ message: error.message });
+  }
+};
+
+export const getContactRequests = async (req, res) => {
+  const authId = req.user._id;
+
+  try {
+    const result = await contactService.getRequests(authId);
+    const message = 'Retrieved requests';
+    return res.status(200).json({ message, ...result });
+  } catch (error) {
+    console.error(`Error retrieving contact requests: ${error.message}`);
+    return res.status(error.status || 500).json({ message: error.message });
+  }
+};
+
+export const getContacts = async (req, res) => {
+  const authId = req.user._id;
+  const { search, page, limit } = req.query;
+
+  try {
+    const result = await contactService.getContacts(
+      authId,
+      search,
+      page,
+      limit
+    );
+    const message = 'Retrieved contacts';
+    return res.status(200).json({ message, ...result });
+  } catch (error) {
+    console.error(`Error retrieving contacts: ${error.message}`);
     return res.status(error.status || 500).json({ message: error.message });
   }
 };

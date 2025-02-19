@@ -7,6 +7,7 @@ import { connectDB, disconnectDB } from './config/db.js';
 import userRoutes from './routes/user.routes.js';
 import contactRoutes from './routes/contact.routes.js';
 import groupRoutes from './routes/group.routes.js';
+import messageRoutes from './routes/message.routes.js';
 
 dotenv.config();
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/group', groupRoutes);
+app.use('/api/message', messageRoutes);
 
 const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

@@ -1,19 +1,5 @@
 import groupService from '../services/group.service.js';
 
-export const getGroups = async (req, res) => {
-  const authId = req.user._id;
-  const { page, limit } = req.query;
-
-  try {
-    const result = await groupService.getGroups(authId, page, limit);
-    const message = 'Groups retrieved';
-    return res.status(200).json({ message, ...result });
-  } catch (error) {
-    console.error(`Error retrieving groups: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
-  }
-};
-
 export const createGroup = async (req, res) => {
   const authId = req.user._id;
   const { name } = req.body;
@@ -86,6 +72,20 @@ export const leaveGroup = async (req, res) => {
     return res.status(200).json({ message, ...result });
   } catch (error) {
     console.error(`Error leaving group: ${error.message}`);
+    return res.status(error.status || 500).json({ message: error.message });
+  }
+};
+
+export const getGroups = async (req, res) => {
+  const authId = req.user._id;
+  const { page, limit } = req.query;
+
+  try {
+    const result = await groupService.getGroups(authId, page, limit);
+    const message = 'Groups retrieved';
+    return res.status(200).json({ message, ...result });
+  } catch (error) {
+    console.error(`Error retrieving groups: ${error.message}`);
     return res.status(error.status || 500).json({ message: error.message });
   }
 };

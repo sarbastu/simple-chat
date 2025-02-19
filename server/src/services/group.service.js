@@ -7,7 +7,7 @@ class GroupServices {
     const validatedPage = Math.max(Number(page) || 1, 1);
 
     const query = {
-      members: authId,
+      members: { $in: [authId] },
     };
 
     const groups = await Group.find(query)
