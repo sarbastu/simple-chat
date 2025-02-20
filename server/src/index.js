@@ -8,6 +8,13 @@ import userRoutes from './routes/user.routes.js';
 import contactRoutes from './routes/contact.routes.js';
 import groupRoutes from './routes/group.routes.js';
 import messageRoutes from './routes/message.routes.js';
+import {
+  AUTH_ROUTE,
+  CONTACT_ROUTE,
+  GROUP_ROUTE,
+  MESSAGE_ROUTE,
+  USER_ROUTE,
+} from './config/apiPaths.js';
 
 dotenv.config();
 const app = express();
@@ -25,11 +32,11 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/contact', contactRoutes);
-app.use('/api/group', groupRoutes);
-app.use('/api/message', messageRoutes);
+app.use(AUTH_ROUTE, authRoutes);
+app.use(USER_ROUTE, userRoutes);
+app.use(CONTACT_ROUTE, contactRoutes);
+app.use(GROUP_ROUTE, groupRoutes);
+app.use(MESSAGE_ROUTE, messageRoutes);
 
 const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

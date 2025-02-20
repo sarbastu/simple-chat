@@ -1,3 +1,4 @@
+import { CONTACT_ROUTE } from '../config/apiPaths.js';
 import Contact from '../models/contact.model.js';
 
 class ContactService {
@@ -117,7 +118,7 @@ class ContactService {
       nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
     };
 
-    const baseUrl = `/contact?search=${search || ''}&limit=${maxLimit}`;
+    const baseUrl = `${CONTACT_ROUTE}?search=${search || ''}&limit=${maxLimit}`;
 
     pagination.links = {
       self: `${baseUrl}&page=${validatedPage}`,
@@ -164,7 +165,7 @@ class ContactService {
       nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
     };
 
-    const baseUrl = `/contact/pending?limit=${maxLimit}`;
+    const baseUrl = `${CONTACT_ROUTE}/pending?limit=${maxLimit}`;
 
     pagination.links = {
       self: `${baseUrl}&page=${validatedPage}`,

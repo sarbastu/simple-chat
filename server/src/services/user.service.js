@@ -1,3 +1,4 @@
+import { USER_ROUTE } from '../config/apiPaths.js';
 import cloudinary from '../config/cloudinary.js';
 import User from '../models/user.model.js';
 
@@ -88,7 +89,7 @@ class UserService {
       nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
     };
 
-    const baseUrl = `/user?search=${search || ''}&limit=${maxLimit}`;
+    const baseUrl = `${USER_ROUTE}?search=${search || ''}&limit=${maxLimit}`;
 
     pagination.links = {
       self: `${baseUrl}&page=${validatedPage}`,

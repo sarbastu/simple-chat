@@ -1,108 +1,24 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Chat from './pages/chat';
-import Auth from './pages/auth';
-import Profile from './pages/profile';
-import { useAppStore } from './store';
-import { useEffect, useState } from 'react';
-import { apiClient } from './lib/api-client';
-import { LOGOUT_ROUTE, USER_ROUTE } from './utils/constants';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-
-const ProtectedRoute = ({ children, requiresAuth }) => {
-  const { userInfo } = useAppStore();
-  const isAuthenticated = !!userInfo;
-
-  if (requiresAuth && !isAuthenticated) {
-    return <Navigate to='/auth' />;
-  }
-
-  if (!requiresAuth && isAuthenticated) {
-    return <Navigate to='/chat' />;
-  }
-
-  return children;
-};
+import { Route, Routes } from 'react-router-dom';
+import Navbar from './components/navbar';
+import HomePage from './pages/Home';
+import SignupPage from './pages/Signup';
+import LoginPage from './pages/Login';
+import SettingsPage from './pages/Settings';
+import ProfilePage from './pages/profile';
 
 const App = () => {
-  const { userInfo, setUserInfo } = useAppStore();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const response = await apiClient.get(USER_ROUTE);
-        if (response.status === 200 && response.data.user) {
-          setUserInfo(response.data.user);
-        } else {
-          setUserInfo(null);
-          apiClient.delete(LOGOUT_ROUTE);
-        }
-      } catch (error) {
-        console.error(error);
-        setUserInfo(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!userInfo) {
-      getUserData();
-    } else {
-      setLoading(false);
-    }
-  }, [userInfo, setUserInfo]);
-
-  if (loading) {
-    return (
-      <div className='h-screen w-full flex justify-center items-center bg-stone-900'>
-        <FontAwesomeIcon
-          icon={faSpinner}
-          pulse
-          className='text-5xl text-white'
-        />
-      </div>
-    );
-  }
-
   return (
-    <BrowserRouter>
+    <div className=''>
+      <Navbar />
+
       <Routes>
-        {/* Default redirect based on authentication state */}
-        <Route
-          path='*'
-          element={<Navigate to={userInfo ? '/chat' : '/auth'} replace />}
-        />
-
-        {/* Public Route (Authentication Page) */}
-        <Route
-          path='/auth'
-          element={
-            <ProtectedRoute requiresAuth={false}>
-              <Auth />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Private Routes */}
-        <Route
-          path='/chat'
-          element={
-            <ProtectedRoute requiresAuth={true}>
-              <Chat />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/profile'
-          element={
-            <ProtectedRoute requiresAuth={true}>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+        <Route path='/' element={<HomePage />} />
+        <Route path='/signup' element={<SignupPage />} />
+        <Route path='/login' element={<LoginPage />} />
+        <Route path='/settings' element={<SettingsPage />} />
+        <Route path='/profile' element={<ProfilePage />} />
       </Routes>
-    </BrowserRouter>
+    </div>
   );
 };
 

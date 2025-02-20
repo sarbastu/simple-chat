@@ -1,3 +1,4 @@
+import { MESSAGE_ROUTE } from '../config/apiPaths.js';
 import cloudinary from '../config/cloudinary.js';
 import Contact from '../models/contact.model.js';
 import Group from '../models/group.model.js';
@@ -81,7 +82,7 @@ class MessageServices {
       nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
     };
 
-    const baseUrl = `/message?limit=${maxLimit}`;
+    const baseUrl = `${MESSAGE_ROUTE}?limit=${maxLimit}`;
     baseUrl += targetUserId
       ? `&targetUserId=${targetUserId}`
       : `&groupId=${groupId}`;

@@ -1,3 +1,4 @@
+import { GROUP_ROUTE } from '../config/apiPaths.js';
 import Contact from '../models/contact.model.js';
 import Group from '../models/group.model.js';
 
@@ -29,7 +30,7 @@ class GroupServices {
       nextPage: validatedPage < totalPages ? validatedPage + 1 : null,
     };
 
-    const baseUrl = `/group?limit=${maxLimit}`;
+    const baseUrl = `${GROUP_ROUTE}?limit=${maxLimit}`;
 
     pagination.links = {
       self: `${baseUrl}&page=${validatedPage}`,
