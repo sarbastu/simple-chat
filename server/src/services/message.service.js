@@ -3,15 +3,13 @@ import cloudinary from '../config/cloudinary.js';
 import Contact from '../models/contact.model.js';
 import Group from '../models/group.model.js';
 import Message from '../models/message.model.js';
+import AppError from '../utils/appError.js';
 
 class MessageServices {
   sendMessage = async (authId, targetUserId, groupId, text, image) => {
     const isAuth = await this.#isAuth(authId, targetUserId, groupId);
     if (!isAuth) {
-      throw {
-        status: 403,
-        message: 'No permission to send this message',
-      };
+      throw new AppError(403, 'Not authorized to send this message');
     }
 
     let imageUrl = '';
@@ -22,10 +20,8 @@ class MessageServices {
           resource_type: 'image',
         })
         .catch((error) => {
-          throw {
-            status: 500,
-            message: `Image upload failed: ${error.message}`,
-          };
+          console.error(error);
+          throw new AppError(500, 'Image upload failed');
         });
       imageUrl = uploadResponse.secure_url;
     }
@@ -38,16 +34,13 @@ class MessageServices {
       ...(image && { image: imageUrl }),
     });
 
-    return { data: message };
+    return { ...message.toObject() };
   };
 
   getMessages = async (authId, targetUserId, groupId, page = 1, limit) => {
     const isAuth = await this.#isAuth(authId, targetUserId, groupId);
     if (!isAuth) {
-      throw {
-        status: 403,
-        message: 'No permission to send this message',
-      };
+      throw new AppError(403, 'Not authorized to send this message');
     }
 
     const maxLimit = Math.min(Number(limit) || 20, 100);
@@ -98,7 +91,7 @@ class MessageServices {
       last: `${baseUrl}&page=${totalPages}`,
     };
 
-    return { data: messages, pagination };
+    return { messages: messages, pagination };
   };
 
   #isAuth = async (authId, targetUserId, groupId) => {

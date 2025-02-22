@@ -15,6 +15,7 @@ import {
   MESSAGE_ROUTE,
   USER_ROUTE,
 } from './config/apiPaths.js';
+import errorHandler from './middlewares/errorHandler.js';
 
 dotenv.config();
 const app = express();
@@ -37,6 +38,7 @@ app.use(USER_ROUTE, userRoutes);
 app.use(CONTACT_ROUTE, contactRoutes);
 app.use(GROUP_ROUTE, groupRoutes);
 app.use(MESSAGE_ROUTE, messageRoutes);
+app.use(errorHandler);
 
 const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

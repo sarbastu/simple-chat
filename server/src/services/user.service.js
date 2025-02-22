@@ -1,6 +1,7 @@
 import { USER_ROUTE } from '../config/apiPaths.js';
 import cloudinary from '../config/cloudinary.js';
 import User from '../models/user.model.js';
+import AppError from '../utils/appError.js';
 
 class UserService {
   getProfile = async (authId) => {
@@ -9,10 +10,10 @@ class UserService {
     );
 
     if (!userData) {
-      throw { status: 404, message: 'User not found' };
+      throw new AppError(404, 'User not found');
     }
 
-    return { data: userData };
+    return { ...userData.toObject() };
   };
 
   updateProfile = async (authId, updateData) => {
@@ -22,10 +23,10 @@ class UserService {
     }).select('displayName email profileImage online');
 
     if (!updatedUser) {
-      throw { status: 404, message: 'User not found' };
+      throw new AppError(404, 'User not found');
     }
 
-    return { data: updatedUser };
+    return { ...updatedUser };
   };
 
   updateProfileImage = async (authId, image) => {
@@ -35,10 +36,8 @@ class UserService {
         resource_type: 'image',
       })
       .catch((error) => {
-        throw {
-          status: 500,
-          message: `Image upload failed: ${error.message}`,
-        };
+        console.error(error);
+        throw new AppError(500, 'Image upload failed');
       });
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -50,10 +49,10 @@ class UserService {
     ).select('displayName email profileImage online');
 
     if (!updatedUser) {
-      throw { status: 404, message: 'User not found' };
+      throw new AppError(404, 'User not found');
     }
 
-    return { data: updatedUser };
+    return { ...updatedUser.toObject() };
   };
 
   getUsers = async (search = '', page = 1, limit) => {
@@ -102,7 +101,7 @@ class UserService {
       last: `${baseUrl}&page=${totalPages}`,
     };
 
-    return { data: users, pagination };
+    return { users: users, pagination };
   };
 }
 

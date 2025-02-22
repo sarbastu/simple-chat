@@ -1,5 +1,6 @@
 import { CONTACT_ROUTE } from '../config/apiPaths.js';
 import Contact from '../models/contact.model.js';
+import AppError from '../utils/appError.js';
 
 class ContactService {
   requestContact = async (authId, targetUserId) => {
@@ -16,10 +17,10 @@ class ContactService {
       });
     }
     if (existing.status === 'accepted') {
-      throw { status: 400, message: 'Contact already added' };
+      throw new AppError(400, 'Contact already exists');
     }
     if (existing.status === 'pending' && existing.requester.equals(authId)) {
-      throw { status: 400, message: 'Request already exists' };
+      throw new AppError(400, 'Request already exists');
     }
     if (existing.status === 'pending' && existing.recipient.equals(authId)) {
       existing.status = 'accepted';
@@ -32,7 +33,7 @@ class ContactService {
     }
 
     await existing.save();
-    return { data: existing };
+    return { ...existing.toObject() };
   };
 
   acceptContact = async (authId, contactId) => {
@@ -47,10 +48,10 @@ class ContactService {
     );
 
     if (!contact) {
-      throw { status: 404, message: 'Contact request not found' };
+      throw new AppError(404, 'Request not found');
     }
 
-    return { data: contact };
+    return { ...contact.toObject() };
   };
 
   removeContact = async (authId, contactId, hardDelete = false) => {
@@ -60,7 +61,7 @@ class ContactService {
     });
 
     if (!contact) {
-      throw { status: 404, message: 'Contact not found' };
+      throw new AppError(404, 'Contact not found');
     }
 
     if (hardDelete) {
@@ -69,7 +70,7 @@ class ContactService {
       await contact.softDelete();
     }
 
-    return contact;
+    return { ...contact.toObject() };
   };
 
   getContacts = async (authId, search, page = 1, limit) => {
@@ -131,7 +132,7 @@ class ContactService {
       last: `${baseUrl}&page=${totalPages}`,
     };
 
-    return { data: contactsFormatted, pagination };
+    return { contacts: contactsFormatted, pagination };
   };
 
   getRequests = async (authId, page = 1, limit) => {
@@ -178,7 +179,7 @@ class ContactService {
       last: `${baseUrl}&page=${totalPages}`,
     };
 
-    return { data: contactsFormatted, pagination };
+    return { requests: contactsFormatted, pagination };
   };
 
   #getContactDetails = (authId, contacts) => {

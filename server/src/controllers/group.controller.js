@@ -1,25 +1,24 @@
 import groupService from '../services/group.service.js';
+import AppError from '../utils/appError.js';
 
-export const createGroup = async (req, res) => {
+export const createGroup = async (req, res, next) => {
   const authId = req.user._id;
   const { name } = req.body;
 
   try {
     const result = await groupService.createGroup(authId, name);
-    const message = 'Group created';
-    return res.status(201).json({ message, ...result });
+    return res.status(201).json(result);
   } catch (error) {
-    console.error(`Error creating group: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const addMemberToGroup = async (req, res) => {
+export const addMemberToGroup = async (req, res, next) => {
   const authId = req.user._id;
   const { groupId, targetUserId } = req.params;
 
   if (!groupId || !targetUserId) {
-    return res.status(400).json({ message: 'Group or user is missing' });
+    return next(new AppError(400, 'Group or target user is required'));
   }
 
   try {
@@ -28,20 +27,18 @@ export const addMemberToGroup = async (req, res) => {
       groupId,
       targetUserId
     );
-    const message = 'User added to group';
-    return res.status(200).json({ message, ...result });
+    return res.status(200).json(result);
   } catch (error) {
-    console.error(`Error adding member to group: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const removeMemberFromGroup = async (req, res) => {
+export const removeMemberFromGroup = async (req, res, next) => {
   const authId = req.user._id;
   const { groupId, targetUserId } = req.params;
 
   if (!groupId || !targetUserId) {
-    return res.status(400).json({ message: 'Group or user is missing' });
+    return next(new AppError(400, 'Group or target user is required'));
   }
 
   try {
@@ -50,42 +47,36 @@ export const removeMemberFromGroup = async (req, res) => {
       groupId,
       targetUserId
     );
-    const message = 'User removed from group';
-    return res.status(200).json({ message, ...result });
+    return res.status(200).json(result);
   } catch (error) {
-    console.error(`Error removing member from group: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const leaveGroup = async (req, res) => {
+export const leaveGroup = async (req, res, next) => {
   const authId = req.user._id;
   const { groupId } = req.params;
 
   if (!groupId) {
-    return res.status(400).json({ message: 'Group is missing' });
+    return next(new AppError(400, 'Group or target user is required'));
   }
 
   try {
     const result = await groupService.leaveGroup(authId, groupId);
-    const message = 'User left group';
-    return res.status(200).json({ message, ...result });
+    return res.status(200).json(result);
   } catch (error) {
-    console.error(`Error leaving group: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getGroups = async (req, res) => {
+export const getGroups = async (req, res, next) => {
   const authId = req.user._id;
   const { page, limit } = req.query;
 
   try {
     const result = await groupService.getGroups(authId, page, limit);
-    const message = 'Groups retrieved';
-    return res.status(200).json({ message, ...result });
+    return res.status(200).json(result);
   } catch (error) {
-    console.error(`Error retrieving groups: ${error.message}`);
-    return res.status(error.status || 500).json({ message: error.message });
+    next(error);
   }
 };

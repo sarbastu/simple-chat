@@ -1,6 +1,7 @@
 import { GROUP_ROUTE } from '../config/apiPaths.js';
 import Contact from '../models/contact.model.js';
 import Group from '../models/group.model.js';
+import AppError from '../utils/appError.js';
 
 class GroupServices {
   getGroups = async (authId, page = 1, limit = 20) => {
@@ -43,7 +44,7 @@ class GroupServices {
       last: `${baseUrl}&page=${totalPages}`,
     };
 
-    return { data: groups, pagination };
+    return { groups: groups, pagination };
   };
 
   createGroup = async (authId, name = '') => {
@@ -53,7 +54,7 @@ class GroupServices {
       members: [authId],
     });
 
-    return { data: group };
+    return { ...group.toObject() };
   };
 
   addMemberToGroup = async (authId, groupId, targetUserId) => {
@@ -62,7 +63,7 @@ class GroupServices {
     const isContact = await Contact.findOne({ uniquePair });
 
     if (!isContact) {
-      throw { status: 403, message: 'Recipient must be a contact' };
+      throw new AppError(403, 'Recipient must be a contact');
     }
 
     const group = await Group.findOneAndUpdate(
@@ -77,25 +78,25 @@ class GroupServices {
     );
 
     if (!group) {
-      throw { status: 403, message: 'Not authorized or group not found' };
+      throw new AppError(403, 'Not authorized or group does not exist');
     }
 
-    return { data: group };
+    return { ...group.toObject() };
   };
 
   removeMemberFromGroup = async (authId, groupId, targetUserId) => {
     const group = await Group.findById(groupId);
 
     if (!group) {
-      throw { status: 404, message: 'Group not found' };
+      throw new AppError(404, 'Group not found');
     }
 
     if (group.admin.toString() !== authId) {
-      throw { status: 403, message: 'Not authorized to remove members' };
+      throw new AppError(403, 'Not authorized to remove members');
     }
 
     if (group.admin.toString() === targetUserId) {
-      throw { status: 400, message: "Admin can't be removed from the group" };
+      throw new AppError(400, 'Admin can not be removed from the group');
     }
 
     group.members = group.members.filter(
@@ -104,14 +105,14 @@ class GroupServices {
 
     await group.save();
 
-    return { data: group };
+    return { ...group.toObject() };
   };
 
   leaveGroup = async (authId, groupId) => {
     const group = await Group.findById(groupId);
 
     if (!group) {
-      throw { status: 404, message: 'Group not found' };
+      throw new AppError(404, 'Group not found');
     }
 
     if (group.admin.toString() === authId) {
@@ -130,7 +131,7 @@ class GroupServices {
 
     await group.save();
 
-    return { data: group };
+    return { ...group.toObject() };
   };
 }
 

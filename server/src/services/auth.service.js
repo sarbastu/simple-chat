@@ -1,6 +1,7 @@
 import { compare } from 'bcrypt';
 import User from '../models/user.model.js';
 import { generateToken } from '../utils/jwt.js';
+import AppError from '../utils/appError.js';
 
 class AuthService {
   signup = async (email, password) => {
@@ -10,7 +11,7 @@ class AuthService {
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      throw { status: 409, message: 'Email already in use' };
+      throw new AppError(409, 'Email already in use');
     }
 
     const user = await User.create({ email, password });
@@ -20,7 +21,7 @@ class AuthService {
       'displayName email profileImage online'
     );
 
-    return { data: sanitizedUser, token };
+    return { ...sanitizedUser.toObject(), token };
   };
 
   login = async (email, password) => {
@@ -29,14 +30,8 @@ class AuthService {
 
     const user = await User.findOne({ email });
 
-    if (!user) {
-      throw { status: 404, message: 'User not found' };
-    }
-
-    const isPasswordValid = await compare(password, user.password);
-
-    if (!isPasswordValid) {
-      throw { status: 400, message: 'Incorrect password' };
+    if (!user || !(await compare(password, user.password))) {
+      throw new AppError(400, 'Invalid credentials');
     }
 
     const token = generateToken(user._id);
@@ -44,7 +39,7 @@ class AuthService {
       'displayName password email profileImage online'
     );
 
-    return { data: sanitizedUser, token };
+    return { ...sanitizedUser.toObject(), token };
   };
 }
 
