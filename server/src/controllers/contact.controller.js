@@ -11,7 +11,7 @@ export const requestContact = async (req, res, next) => {
 
   try {
     await contactService.requestContact(authId, targetUserId);
-    return res.status(201);
+    return res.status(201).json({ message: 'Request sent' });
   } catch (error) {
     next(error);
   }
@@ -27,7 +27,7 @@ export const acceptContact = async (req, res, next) => {
 
   try {
     await contactService.acceptContact(authId, contactId);
-    return res.status(200);
+    return res.status(200).json({ message: 'Contact accepted' });
   } catch (error) {
     next(error);
   }
@@ -43,7 +43,7 @@ export const removeContact = async (req, res, next) => {
 
   try {
     await contactService.removeContact(authId, contactId, hardDelete);
-    return res.status(200);
+    return res.status(200).json({ message: 'Contact removed' });
   } catch (error) {
     next(error);
   }
