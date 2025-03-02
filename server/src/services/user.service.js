@@ -16,8 +16,23 @@ class UserService {
     return { ...userData.toObject() };
   };
 
-  updateProfile = async (authId, updateData) => {
-    const updatedUser = await User.findByIdAndUpdate(authId, updateData, {
+  updateProfile = async (authId, imagePath, updateData) => {
+    let updateFields = { ...updateData };
+
+    if (imagePath) {
+      const uploadResponse = await cloudinary.uploader
+        .upload(imagePath, {
+          folder: 'profile_images',
+          resource_type: 'image',
+        })
+        .catch((error) => {
+          throw new AppError(500, 'Image upload failed');
+        });
+
+      updateFields.profileImage = uploadResponse.secure_url;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(authId, updateFields, {
       new: true,
       runValidators: true,
     }).select('displayName email profileImage online');
@@ -27,32 +42,6 @@ class UserService {
     }
 
     return { ...updatedUser };
-  };
-
-  updateProfileImage = async (authId, image) => {
-    const uploadResponse = await cloudinary.uploader
-      .upload(image, {
-        folder: 'profile_images',
-        resource_type: 'image',
-      })
-      .catch((error) => {
-        console.error(error);
-        throw new AppError(500, 'Image upload failed');
-      });
-
-    const updatedUser = await User.findByIdAndUpdate(
-      authId,
-      {
-        profileImage: uploadResponse.secure_url,
-      },
-      { new: true }
-    ).select('displayName email profileImage online');
-
-    if (!updatedUser) {
-      throw new AppError(404, 'User not found');
-    }
-
-    return { ...updatedUser.toObject() };
   };
 
   getUsers = async (search = '', page = 1, limit) => {

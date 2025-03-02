@@ -14,35 +14,18 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   const authId = req.user._id;
+  const imagePath = req.file?.path;
   const { displayName, color } = req.body;
 
-  if (!displayName || !color) {
-    return res
-      .status(400)
-      .json({ message: 'Display name or color is required' });
+  if (!displayName && !color && !imagePath) {
+    return next(new AppError(400, 'No data provided is required'));
   }
 
   try {
-    const result = await userService.updateProfile(authId, {
+    const result = await userService.updateProfile(authId, imagePath, {
       displayName,
       color,
     });
-    return res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateProfileImage = async (req, res, next) => {
-  const authId = req.user._id;
-  const { image } = req.body;
-
-  if (!image) {
-    return next(new AppError(400, 'Image is required'));
-  }
-
-  try {
-    const result = await userService.updateProfileImage(authId, image);
     return res.status(200).json(result);
   } catch (error) {
     next(error);

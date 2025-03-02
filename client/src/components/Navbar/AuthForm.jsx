@@ -1,6 +1,6 @@
 import { LoaderCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const AuthForm = ({ isSigningUp, onSubmit, isLoading }) => {
   const { error } = useAuthStore();

@@ -12,7 +12,7 @@ const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
 
   useEffect(() => {
-    checkAuth();
+    if (isCheckingAuth) checkAuth();
   }, [checkAuth]);
 
   if (isCheckingAuth)

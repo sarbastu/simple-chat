@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
-import AuthForm from '../AuthForm';
+import AuthForm from './AuthForm';
 
 const LoginModal = () => {
   const { login, isLoggingIn, setError } = useAuthStore();
