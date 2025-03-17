@@ -41,7 +41,7 @@ class UserService {
       throw new AppError(404, 'User not found');
     }
 
-    return { ...updatedUser };
+    return { ...updatedUser.toObject() };
   };
 
   getUsers = async (search = '', page = 1, limit) => {
